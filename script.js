@@ -89,6 +89,28 @@ async function initApp() {
         
         // Hide loader
         hideLoader();
+        try {
+        // Only attempt fullscreen after user interaction (like a click)
+        // This is because browsers require user interaction before allowing fullscreen
+        const tryFullscreen = () => {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) {
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) {
+                document.documentElement.msRequestFullscreen();
+            }
+            document.removeEventListener('click', tryFullscreen);
+        };
+        
+        // Add a one-time click event listener
+        document.addEventListener('click', tryFullscreen, { once: true });
+    } catch (error) {
+        console.error("Could not enter fullscreen mode:", error);
+    }
+
     } catch (error) {
         console.error("Error initializing app:", error);
         showToast("Failed to initialize app. Please refresh the page.", "error");
@@ -124,6 +146,66 @@ function applySettings() {
     
     // Apply sound effects
     if (soundEffectsToggle) soundEffectsToggle.checked = settings.soundEffects;
+}
+// Fullscreen functionality
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+// Add this to the setupEventListeners function
+if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+}
+
+// Toggle fullscreen function
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+            document.documentElement.mozRequestFullScreen();
+        } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
+            document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+            document.documentElement.msRequestFullscreen();
+        }
+        
+        // Change icon to exit fullscreen
+        fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>';
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+            document.msExitFullscreen();
+        }
+        
+        // Change icon back to enter fullscreen
+        fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>';
+    }
+}
+
+// Listen for fullscreen change events
+document.addEventListener('fullscreenchange', updateFullscreenButtonIcon);
+document.addEventListener('webkitfullscreenchange', updateFullscreenButtonIcon);
+document.addEventListener('mozfullscreenchange', updateFullscreenButtonIcon);
+document.addEventListener('MSFullscreenChange', updateFullscreenButtonIcon);
+
+// Update the fullscreen button icon based on fullscreen state
+function updateFullscreenButtonIcon() {
+    if (document.fullscreenElement || 
+        document.webkitFullscreenElement || 
+        document.mozFullScreenElement ||
+        document.msFullscreenElement) {
+        // We're in fullscreen mode
+        fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>';
+    } else {
+        // We're not in fullscreen mode
+        fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>';
+    }
 }
 
 // Event Listeners
