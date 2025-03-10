@@ -1322,6 +1322,20 @@ input:checked + .slider:before {
         margin-top: var(--spacing-md);
     }
 }
+/* Add this to your CSS */
+#fullscreen-btn:hover {
+    background-color: var(--accent-light);
+    color: var(--accent-color);
+}
+
+/* Fullscreen mode adjustments */
+:fullscreen .app-container,
+:-webkit-full-screen .app-container,
+:-moz-full-screen .app-container,
+:-ms-fullscreen .app-container {
+    height: 100vh;
+    width: 100vw;
+}
 
 /* Print styles */
 @media print {
