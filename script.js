@@ -2,10 +2,12 @@
 const API_URL = 'https://pinnedthoughts.onrender.com';
 
 // DOM Elements
+const loader = document.getElementById('loader');
 const sidebar = document.getElementById('sidebar');
 const openSidebarBtn = document.getElementById('open-sidebar');
 const closeSidebarBtn = document.getElementById('close-sidebar');
 const newChatBtn = document.getElementById('new-chat-btn');
+const mobileNewChatBtn = document.getElementById('mobile-new-chat');
 const modelSelect = document.getElementById('model-select');
 const chatContainer = document.getElementById('chat-container');
 const messageInput = document.getElementById('message-input');
@@ -20,6 +22,22 @@ const editTitleModal = document.getElementById('edit-title-modal');
 const editTitleInput = document.getElementById('edit-title-input');
 const cancelEditBtn = document.getElementById('cancel-edit');
 const confirmEditBtn = document.getElementById('confirm-edit');
+const settingsModal = document.getElementById('settings-modal');
+const settingsBtn = document.getElementById('settings-button');
+const saveSettingsBtn = document.getElementById('save-settings');
+const fontSizeSelect = document.getElementById('font-size');
+const typingSpeedSelect = document.getElementById('typing-speed');
+const autoScrollToggle = document.getElementById('auto-scroll');
+const soundEffectsToggle = document.getElementById('sound-effects');
+const searchInput = document.getElementById('search-chats');
+const currentChatTitle = document.getElementById('current-chat-title');
+const editTitleBtn = document.getElementById('edit-title-btn');
+const exportChatBtn = document.getElementById('export-chat-btn');
+const clearChatBtn = document.getElementById('clear-chat-btn');
+const chatHeader = document.getElementById('chat-header');
+const suggestionChips = document.querySelectorAll('.suggestion-chip');
+const modalCloseButtons = document.querySelectorAll('.modal-close');
+const toastContainer = document.getElementById('toast-container');
 
 // App State
 let currentChatId = null;
@@ -28,9 +46,22 @@ let currentTheme = localStorage.getItem('theme') || 'default';
 let isTyping = false;
 let chatToDelete = null;
 let chatToEdit = null;
+let settings = {
+    fontSize: localStorage.getItem('fontSize') || 'medium',
+    typingSpeed: localStorage.getItem('typingSpeed') || 'medium',
+    autoScroll: localStorage.getItem('autoScroll') !== 'false',
+    soundEffects: localStorage.getItem('soundEffects') === 'true'
+};
+
+// Sound effects
+const sendSound = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
+const receiveSound = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
 
 // Initialize the app
 async function initApp() {
+    // Apply settings
+    applySettings();
+    
     // Load saved theme
     applyTheme(currentTheme);
     highlightActiveTheme();
@@ -38,48 +69,110 @@ async function initApp() {
     // Setup event listeners
     setupEventListeners();
     
-    // Load available models
-    await loadAvailableModels();
-    
-    // Load chat history
-    await loadChats();
-    
-    // Check if URL has chat ID parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('chat');
-    if (chatId) {
-        loadChat(chatId);
+    try {
+        // Load available models
+        await loadAvailableModels();
+        
+        // Load chat history
+        await loadChats();
+        
+        // Check if URL has chat ID parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatId = urlParams.get('chat');
+        if (chatId) {
+            await loadChat(chatId);
+        } else {
+            // Show welcome screen
+            welcomeScreen.style.display = 'flex';
+            chatHeader.style.display = 'none';
+        }
+        
+        // Hide loader
+        hideLoader();
+    } catch (error) {
+        console.error("Error initializing app:", error);
+        showToast("Failed to initialize app. Please refresh the page.", "error");
+        hideLoader();
     }
+}
+
+// Show/hide loader
+function showLoader() {
+    loader.style.display = 'flex';
+}
+
+function hideLoader() {
+    loader.style.opacity = '0';
+    setTimeout(() => {
+        loader.style.display = 'none';
+        loader.style.opacity = '1';
+    }, 500);
+}
+
+// Apply settings
+function applySettings() {
+    // Apply font size
+    document.body.setAttribute('data-font-size', settings.fontSize);
+    if (fontSizeSelect) fontSizeSelect.value = settings.fontSize;
+    
+    // Apply typing speed
+    document.body.setAttribute('data-typing-speed', settings.typingSpeed);
+    if (typingSpeedSelect) typingSpeedSelect.value = settings.typingSpeed;
+    
+    // Apply auto-scroll
+    if (autoScrollToggle) autoScrollToggle.checked = settings.autoScroll;
+    
+    // Apply sound effects
+    if (soundEffectsToggle) soundEffectsToggle.checked = settings.soundEffects;
 }
 
 // Event Listeners
 function setupEventListeners() {
     // Mobile sidebar toggle
-    openSidebarBtn.addEventListener('click', () => {
-        sidebar.classList.add('active');
-    });
+    if (openSidebarBtn) {
+        openSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('active');
+        });
+    }
     
-    closeSidebarBtn.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-    });
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+        });
+    }
     
     // New chat button
-    newChatBtn.addEventListener('click', startNewChat);
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', startNewChat);
+    }
+    
+    if (mobileNewChatBtn) {
+        mobileNewChatBtn.addEventListener('click', startNewChat);
+    }
     
     // Send message
-    sendButton.addEventListener('click', sendMessage);
+    if (sendButton) {
+        sendButton.addEventListener('click', sendMessage);
+    }
     
     // Input field events
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-    
-    messageInput.addEventListener('input', () => {
-        sendButton.disabled = messageInput.value.trim() === '';
-    });
+    if (messageInput) {
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        messageInput.addEventListener('input', () => {
+            // Auto-resize the textarea
+            messageInput.style.height = 'auto';
+            messageInput.style.height = (messageInput.scrollHeight) + 'px';
+            
+            // Enable/disable send button
+            sendButton.disabled = messageInput.value.trim() === '';
+        });
+    }
     
     // Theme selector
     themeDots.forEach(dot => {
@@ -92,32 +185,157 @@ function setupEventListeners() {
     });
     
     // Modal events
-    cancelDeleteBtn.addEventListener('click', () => {
-        deleteModal.classList.remove('active');
-        chatToDelete = null;
-    });
-    
-    confirmDeleteBtn.addEventListener('click', async () => {
-        if (chatToDelete) {
-            await deleteChat(chatToDelete);
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', () => {
             deleteModal.classList.remove('active');
             chatToDelete = null;
+        });
+    }
+    
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (chatToDelete) {
+                await deleteChat(chatToDelete);
+                deleteModal.classList.remove('active');
+                chatToDelete = null;
+            }
+        });
+    }
+    
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', () => {
+            editTitleModal.classList.remove('active');
+            chatToEdit = null;
+        });
+    }
+    
+    if (confirmEditBtn) {
+        confirmEditBtn.addEventListener('click', async () => {
+            if (chatToEdit) {
+                const newTitle = editTitleInput.value.trim();
+                if (newTitle) {
+                    await updateChatTitle(chatToEdit, newTitle);
+                    editTitleModal.classList.remove('active');
+                    chatToEdit = null;
+                }
+            }
+        });
+    }
+    
+    // Settings modal
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('active');
+        });
+    }
+    
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', () => {
+            saveSettings();
+            settingsModal.classList.remove('active');
+        });
+    }
+    
+    // Search input
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            filterChats(searchInput.value.trim().toLowerCase());
+        });
+    }
+    
+    // Edit title button
+    if (editTitleBtn) {
+        editTitleBtn.addEventListener('click', () => {
+            if (currentChatId) {
+                showEditTitleModal(currentChatId, currentChatTitle.textContent);
+            }
+        });
+    }
+    
+    // Export chat button
+    if (exportChatBtn) {
+        exportChatBtn.addEventListener('click', () => {
+            if (currentChatId) {
+                exportChat(currentChatId);
+            }
+        });
+    }
+    
+    // Clear chat button
+    if (clearChatBtn) {
+        clearChatBtn.addEventListener('click', () => {
+            if (currentChatId) {
+                showDeleteModal(currentChatId);
+            }
+        });
+    }
+    
+    // Suggestion chips
+    suggestionChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const text = chip.getAttribute('data-text');
+            if (text && messageInput) {
+                messageInput.value = text;
+                messageInput.dispatchEvent(new Event('input'));
+                messageInput.focus();
+            }
+        });
+    });
+    
+    // Close all modals when clicking the X button
+    modalCloseButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        });
+    });
+    
+    // Close modals when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('active');
         }
     });
+}
+
+// Save settings
+function saveSettings() {
+    settings.fontSize = fontSizeSelect.value;
+    settings.typingSpeed = typingSpeedSelect.value;
+    settings.autoScroll = autoScrollToggle.checked;
+    settings.soundEffects = soundEffectsToggle.checked;
     
-    cancelEditBtn.addEventListener('click', () => {
-        editTitleModal.classList.remove('active');
-        chatToEdit = null;
-    });
+    // Save to localStorage
+    localStorage.setItem('fontSize', settings.fontSize);
+    localStorage.setItem('typingSpeed', settings.typingSpeed);
+    localStorage.setItem('autoScroll', settings.autoScroll);
+    localStorage.setItem('soundEffects', settings.soundEffects);
     
-    confirmEditBtn.addEventListener('click', async () => {
-        if (chatToEdit) {
-            const newTitle = editTitleInput.value.trim();
-            if (newTitle) {
-                await updateChatTitle(chatToEdit, newTitle);
-                editTitleModal.classList.remove('active');
-                chatToEdit = null;
-            }
+    // Apply settings
+    applySettings();
+    
+    // Show confirmation
+    showToast("Settings saved successfully", "success");
+}
+
+// Filter chats based on search input
+function filterChats(query) {
+    const chatTabs = document.querySelectorAll('.folder-tab');
+    
+    if (!query) {
+        chatTabs.forEach(tab => {
+            tab.style.display = 'flex';
+        });
+        return;
+    }
+    
+    chatTabs.forEach(tab => {
+        const title = tab.querySelector('.tab-title').textContent.toLowerCase();
+        if (title.includes(query)) {
+            tab.style.display = 'flex';
+        } else {
+            tab.style.display = 'none';
         }
     });
 }
@@ -129,23 +347,10 @@ async function loadAvailableModels() {
         if (response.ok) {
             const data = await response.json();
             console.log("Available models:", data.models);
-            
-            // Optional: Dynamically populate model selector
-            // if you want to show all available models from the server
-            /*
-            if (data.models && Object.keys(data.models).length > 0) {
-                modelSelect.innerHTML = '';
-                Object.entries(data.models).forEach(([key, value]) => {
-                    const option = document.createElement('option');
-                    option.value = key;
-                    option.textContent = key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' ');
-                    modelSelect.appendChild(option);
-                });
-            }
-            */
         }
     } catch (error) {
         console.error("Error loading models:", error);
+        throw error;
     }
 }
 
@@ -157,9 +362,13 @@ async function loadChats() {
             const chats = await response.json();
             chatHistory = chats;
             renderChatList(chats);
+        } else {
+            throw new Error("Failed to load chats");
         }
     } catch (error) {
         console.error("Error loading chats:", error);
+        showToast("Failed to load chat history", "error");
+        throw error;
     }
 }
 
@@ -196,10 +405,12 @@ function renderChatList(chats) {
         
         const editBtn = document.createElement('button');
         editBtn.className = 'tab-action-btn';
+        editBtn.title = "Edit title";
         editBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
         
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'tab-action-btn';
+        deleteBtn.title = "Delete conversation";
         deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
         
         actionsDiv.appendChild(editBtn);
@@ -244,6 +455,7 @@ function showEditTitleModal(chatId, currentTitle) {
 // Update chat title
 async function updateChatTitle(chatId, newTitle) {
     try {
+        showLoader();
         const response = await fetch(`${API_URL}/chats/${chatId}/title?title=${encodeURIComponent(newTitle)}`, {
             method: 'PUT'
         });
@@ -254,16 +466,29 @@ async function updateChatTitle(chatId, newTitle) {
             if (chatIndex !== -1) {
                 chatHistory[chatIndex].title = newTitle;
                 renderChatList(chatHistory);
+                
+                // Update current chat title if this is the active chat
+                if (currentChatId === chatId) {
+                    currentChatTitle.textContent = newTitle;
+                }
+                
+                showToast("Title updated successfully", "success");
             }
+        } else {
+            throw new Error("Failed to update title");
         }
     } catch (error) {
         console.error("Error updating chat title:", error);
+        showToast("Failed to update title", "error");
+    } finally {
+        hideLoader();
     }
 }
 
 // Delete chat
 async function deleteChat(chatId) {
     try {
+        showLoader();
         const response = await fetch(`${API_URL}/chats/${chatId}`, {
             method: 'DELETE'
         });
@@ -278,18 +503,67 @@ async function deleteChat(chatId) {
                 currentChatId = null;
                 chatContainer.innerHTML = '';
                 welcomeScreen.style.display = 'flex';
+                chatHeader.style.display = 'none';
                 // Update URL
                 window.history.pushState({}, document.title, window.location.pathname);
             }
+            
+            showToast("Conversation deleted", "success");
+        } else {
+            throw new Error("Failed to delete chat");
         }
     } catch (error) {
         console.error("Error deleting chat:", error);
+        showToast("Failed to delete conversation", "error");
+    } finally {
+        hideLoader();
+    }
+}
+
+// Export chat
+async function exportChat(chatId) {
+    try {
+        const response = await fetch(`${API_URL}/chats/${chatId}`);
+        if (!response.ok) {
+            throw new Error("Failed to fetch chat data");
+        }
+        
+        const chatData = await response.json();
+        
+        // Format the chat data
+        let exportText = `# ${chatData.title}\n`;
+        exportText += `Exported on: ${new Date().toLocaleString()}\n\n`;
+        
+        chatData.messages.forEach(msg => {
+            if (msg.role === 'user') {
+                exportText += `## You:\n${msg.content}\n\n`;
+            } else if (msg.role === 'assistant') {
+                exportText += `## AI:\n${msg.content}\n\n`;
+            }
+        });
+        
+        // Create a download link
+        const blob = new Blob([exportText], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${chatData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast("Conversation exported successfully", "success");
+    } catch (error) {
+        console.error("Error exporting chat:", error);
+        showToast("Failed to export conversation", "error");
     }
 }
 
 // Load chat
 async function loadChat(chatId) {
     try {
+        showLoader();
         const response = await fetch(`${API_URL}/chats/${chatId}`);
         if (response.ok) {
             const chatData = await response.json();
@@ -311,33 +585,30 @@ async function loadChat(chatId) {
             // Hide welcome screen
             welcomeScreen.style.display = 'none';
             
+            // Show chat header
+            chatHeader.style.display = 'flex';
+            
+            // Update chat title
+            currentChatTitle.textContent = chatData.title;
+            
             // Clear chat container
             chatContainer.innerHTML = '';
             
             // Render messages
             chatData.messages.forEach(msg => {
                 if (msg.role === 'user' || msg.role === 'assistant') {
-                    addMessageToUI(msg.content, msg.role === 'user');
+                    addMessageToUI(msg.content, msg.role === 'user', false);
                 }
             });
             
-            // Update model selector to match the chat's model
+            // Update model selector if needed
             if (chatData.model) {
                 // Extract the model key from the full model name
-                const modelKey = Object.entries(AVAILABLE_MODELS).find(
-                    ([key, value]) => value === chatData.model
-                )?.[0];
-                
-                if (modelKey && modelSelect.querySelector(`option[value="${modelKey}"]`)) {
-                    modelSelect.value = modelKey;
-                } else {
-                    // If we can't find a direct match, try a partial match
-                    for (const option of modelSelect.options) {
-                        if (chatData.model.includes(option.value) || 
-                            option.value.includes(chatData.model.split('-')[0])) {
-                            modelSelect.value = option.value;
-                            break;
-                        }
+                for (const option of modelSelect.options) {
+                    if (chatData.model.includes(option.value) || 
+                        option.value.includes(chatData.model.split('-')[0])) {
+                        modelSelect.value = option.value;
+                        break;
                     }
                 }
             }
@@ -350,22 +621,13 @@ async function loadChat(chatId) {
             // Scroll to bottom
             scrollToBottom();
         } else {
-            console.error("Error loading chat:", await response.text());
-            
-            // Show error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'ai-message';
-            errorDiv.textContent = "Sorry, there was an error loading this conversation.";
-            chatContainer.appendChild(errorDiv);
+            throw new Error("Failed to load chat");
         }
     } catch (error) {
         console.error("Error loading chat:", error);
-        
-        // Show error message
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'ai-message';
-        errorDiv.textContent = "Sorry, there was an error loading this conversation.";
-        chatContainer.appendChild(errorDiv);
+        showToast("Failed to load conversation", "error");
+    } finally {
+        hideLoader();
     }
 }
 
@@ -388,6 +650,9 @@ function startNewChat() {
     // Show welcome screen
     welcomeScreen.style.display = 'flex';
     
+    // Hide chat header
+    chatHeader.style.display = 'none';
+    
     // Focus on input
     messageInput.focus();
     
@@ -402,12 +667,25 @@ async function sendMessage() {
     const message = messageInput.value.trim();
     if (!message || isTyping) return;
     
+    // Play send sound if enabled
+    if (settings.soundEffects) {
+        sendSound.play();
+    }
+    
     // Add user message to UI
     addMessageToUI(message, true);
     
     // Clear input
     messageInput.value = '';
+    messageInput.style.height = 'auto';
     sendButton.disabled = true;
+    
+    // Hide welcome screen if visible
+    if (welcomeScreen.style.display === 'flex') {
+        welcomeScreen.style.display = 'none';
+        chatHeader.style.display = 'flex';
+        currentChatTitle.textContent = "New Conversation";
+    }
     
     // Show typing indicator
     showTypingIndicator();
@@ -436,15 +714,26 @@ async function sendMessage() {
                 // Update URL with chat ID
                 window.history.pushState({}, document.title, `?chat=${currentChatId}`);
                 
-                // Hide welcome screen
-                welcomeScreen.style.display = 'none';
+                // Update title
+                currentChatTitle.textContent = "New Conversation";
                 
                 // Refresh chat list
                 await loadChats();
+                
+                // Find the current chat to get its title
+                const currentChat = chatHistory.find(chat => chat.id === currentChatId);
+                if (currentChat) {
+                    currentChatTitle.textContent = currentChat.title;
+                }
             }
             
             // Remove typing indicator
             removeTypingIndicator();
+            
+            // Play receive sound if enabled
+            if (settings.soundEffects) {
+                receiveSound.play();
+            }
             
             // Type out the AI response with animation
             typeOutResponse(data.response);
@@ -467,6 +756,7 @@ async function sendMessage() {
             
             // Show error message
             addMessageToUI(errorMessage, false);
+            showToast("Failed to get AI response", "error");
         }
     } catch (error) {
         console.error("Error sending message:", error);
@@ -476,20 +766,21 @@ async function sendMessage() {
         
         // Show error message
         addMessageToUI("I'm sorry, there was an error communicating with the server. Please try again later.", false);
+        showToast("Network error. Please check your connection.", "error");
     }
     
-    // Scroll to bottom
-    scrollToBottom();
+    // Focus input for next message
+    messageInput.focus();
 }
 
 // Add message to UI
-function addMessageToUI(message, isUser) {
+function addMessageToUI(message, isUser, animate = true) {
     const messageDiv = document.createElement('div');
     messageDiv.className = isUser ? 'user-message' : 'ai-message';
     
     // Add random rotation for pinned effect
-    const rotation = isUser ? Math.random() * 2 : Math.random() * -2;
-    messageDiv.style.setProperty('--rotate-deg', `${rotation}deg`);
+    const rotation = isUser ? Math.random() * 2 - 1 : Math.random() * 2 - 1;
+    messageDiv.style.transform = `rotate(${rotation}deg)`;
     
     // Get current time
     const now = new Date();
@@ -497,8 +788,11 @@ function addMessageToUI(message, isUser) {
     const minutes = now.getMinutes();
     const formattedTime = `${hours % 12 || 12}:${minutes < 10 ? '0' + minutes : minutes} ${hours >= 12 ? 'PM' : 'AM'}`;
     
-    // Set message content
-    messageDiv.textContent = message;
+    // Create message content span
+    const contentSpan = document.createElement('span');
+    contentSpan.className = 'message-content';
+    contentSpan.textContent = message;
+    messageDiv.appendChild(contentSpan);
     
     // Add time element
     const timeDiv = document.createElement('div');
@@ -509,8 +803,10 @@ function addMessageToUI(message, isUser) {
     // Add to chat container
     chatContainer.appendChild(messageDiv);
     
-    // Scroll to bottom
-    scrollToBottom();
+    // Scroll to bottom if auto-scroll is enabled
+    if (settings.autoScroll) {
+        scrollToBottom();
+    }
 }
 
 // Show typing indicator
@@ -527,7 +823,9 @@ function showTypingIndicator() {
     }
     
     chatContainer.appendChild(typingDiv);
-    scrollToBottom();
+    if (settings.autoScroll) {
+        scrollToBottom();
+    }
 }
 
 // Remove typing indicator
@@ -546,8 +844,8 @@ async function typeOutResponse(response) {
     messageDiv.className = 'ai-message';
     
     // Add random rotation for pinned effect
-    const rotation = Math.random() * -2;
-    messageDiv.style.setProperty('--rotate-deg', `${rotation}deg`);
+    const rotation = Math.random() * 2 - 1;
+    messageDiv.style.transform = `rotate(${rotation}deg)`;
     
     // Get current time
     const now = new Date();
@@ -556,24 +854,33 @@ async function typeOutResponse(response) {
     const formattedTime = `${hours % 12 || 12}:${minutes < 10 ? '0' + minutes : minutes} ${hours >= 12 ? 'PM' : 'AM'}`;
     
     // Create text container and time element
-    const textSpan = document.createElement('span');
+    const contentSpan = document.createElement('span');
+    contentSpan.className = 'message-content';
+    
     const timeDiv = document.createElement('div');
     timeDiv.className = 'message-time';
     timeDiv.textContent = formattedTime;
     
-    messageDiv.appendChild(textSpan);
+    messageDiv.appendChild(contentSpan);
     messageDiv.appendChild(timeDiv);
     
     // Add to chat container
     chatContainer.appendChild(messageDiv);
     
+    // Calculate typing speed based on settings
+    const baseDelay = 15;
+    const multiplier = parseFloat(settings.typingSpeed === 'fast' ? 0.5 : settings.typingSpeed === 'slow' ? 2 : 1);
+    
     // Type out each character
     for (let i = 0; i < response.length; i++) {
-        textSpan.textContent += response[i];
-        scrollToBottom();
+        contentSpan.textContent += response[i];
+        
+        if (settings.autoScroll) {
+            scrollToBottom();
+        }
         
         // Randomize typing speed slightly for natural effect
-        const delay = 15 + Math.random() * 10;
+        const delay = (baseDelay + Math.random() * 10) * multiplier;
         await new Promise(resolve => setTimeout(resolve, delay));
     }
     
@@ -601,5 +908,102 @@ function highlightActiveTheme() {
     });
 }
 
-// Initialize on load
+// Show toast notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    // Icon based on type
+    let icon = '';
+    let title = '';
+    
+    switch (type) {
+        case 'success':
+            icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+            title = 'Success';
+            break;
+        case 'error':
+            icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+            title = 'Error';
+            break;
+                case 'warning':
+            icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+            title = 'Warning';
+            break;
+        default:
+            icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+            title = 'Info';
+    }
+    
+    // Create toast structure
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'toast-icon';
+    iconDiv.innerHTML = icon;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'toast-content';
+    
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'toast-title';
+    titleDiv.textContent = title;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'toast-message';
+    messageDiv.textContent = message;
+    
+    contentDiv.appendChild(titleDiv);
+    contentDiv.appendChild(messageDiv);
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.addEventListener('click', () => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    });
+    
+    toast.appendChild(iconDiv);
+    toast.appendChild(contentDiv);
+    toast.appendChild(closeBtn);
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Show with animation
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.classList.add('removing');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    // Adjust textarea height on window resize
+    if (messageInput) {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = (messageInput.scrollHeight) + 'px';
+    }
+});
+
+// Available models helper
+const AVAILABLE_MODELS = {
+    "llama3-8b": "llama3-8b-8192",
+    "llama3-70b": "llama3-70b-8192",
+    "mixtral-8x7b": "mixtral-8x7b-32768",
+    "llama3-3-70b": "llama-3.3-70b-versatile",
+    "deepseek-70b": "deepseek-r1-distill-llama-70b"
+};
+
+// Initialize the app when DOM is loaded
 window.addEventListener('DOMContentLoaded', initApp);
