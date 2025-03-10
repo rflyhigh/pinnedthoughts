@@ -2,245 +2,135 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Pinned Thoughts</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
-    <div id="loader">
-        <div class="loader-content">
-            <div class="spinner"></div>
-            <p>Loading your thoughts...</p>
-        </div>
-    </div>
-
-    <div class="app-container">
-        <div class="sidebar" id="sidebar">
+    <div id="app-container">
+        <!-- Sidebar -->
+        <div id="sidebar">
             <div class="sidebar-header">
-                <h1 class="app-title">Pinned Thoughts</h1>
-                <button class="close-sidebar" id="close-sidebar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <h1>Pinned Thoughts</h1>
+                <button id="close-sidebar">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
             
-            <div class="sidebar-content">
-                <div class="model-selector-container">
-                    <label for="model-select">AI Model:</label>
-                    <div class="custom-select">
-                        <select id="model-select">
-                            <option value="llama3-8b">Llama 3 (8B)</option>
-                            <option value="llama3-70b">Llama 3 (70B)</option>
-                            <option value="mixtral-8x7b">Mixtral 8x7B</option>
-                            <option value="llama3-3-70b">Llama 3.3 (70B)</option>
-                            <option value="deepseek-70b">DeepSeek (70B)</option>
-                        </select>
-                        <div class="select-arrow"></div>
-                    </div>
+            <div class="sidebar-section">
+                <label for="model-select">AI Model:</label>
+                <select id="model-select">
+                    <option value="llama3-8b">Llama 3 (8B)</option>
+                    <option value="llama3-70b">Llama 3 (70B)</option>
+                    <option value="mixtral-8x7b">Mixtral 8x7B</option>
+                    <option value="llama3-3-70b">Llama 3.3 (70B)</option>
+                    <option value="deepseek-70b">DeepSeek (70B)</option>
+                </select>
+            </div>
+            
+            <button id="new-chat-btn" class="primary-btn">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New Conversation
+            </button>
+            
+            <div class="chat-list-container">
+                <h2>Your Conversations</h2>
+                <div id="chat-list">
+                    <!-- Chat list will be populated here -->
+                    <div class="empty-chats">No conversations yet</div>
                 </div>
-                
-                <div class="new-chat-btn-container">
-                    <button id="new-chat-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        New Conversation
-                    </button>
-                </div>
-                
-                <div class="search-container">
-                    <div class="search-input-wrapper">
-                        <input type="text" id="search-chats" placeholder="Search conversations...">
-                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    </div>
-                </div>
-                
-                <div class="chats-container">
-                    <h2>Your Conversations</h2>
-                    <div class="folder-tabs" id="chat-list">
-                        <!-- Chat list will be populated here -->
-                        <div class="empty-chats-message">No conversations yet</div>
-                    </div>
-                </div>
-                
-                <div class="sidebar-footer">
-                    <div class="theme-selector">
-                        <span class="theme-label">Theme:</span>
-                        <div class="theme-options">
-                            <div class="theme-dot active" data-theme="default" title="Classic"></div>
-                            <div class="theme-dot" data-theme="sage" title="Sage"></div>
-                            <div class="theme-dot" data-theme="rose" title="Rose"></div>
-                            <div class="theme-dot" data-theme="navy" title="Navy"></div>
-                            <div class="theme-dot" data-theme="dark" title="Dark"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-button" id="settings-button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                        Settings
-                    </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="theme-selector">
+                    <div class="theme-dot default active" data-theme="default"></div>
+                    <div class="theme-dot sage" data-theme="sage"></div>
+                    <div class="theme-dot rose" data-theme="rose"></div>
+                    <div class="theme-dot navy" data-theme="navy"></div>
+                    <div class="theme-dot dark" data-theme="dark"></div>
                 </div>
             </div>
         </div>
         
-        <div class="main-content">
-            <div class="mobile-header">
-                <button class="menu-button" id="open-sidebar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <!-- Main content -->
+        <div id="main">
+            <!-- Mobile header -->
+            <div id="mobile-header">
+                <button id="open-sidebar">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
-                <h1 class="mobile-title">Pinned Thoughts</h1>
-                <div class="header-actions">
-                    <button class="header-btn" id="mobile-new-chat">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </button>
-                </div>
+                <h1>Pinned Thoughts</h1>
+                <button id="mobile-new-chat">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
             </div>
             
-            <div class="chat-header" id="chat-header">
-              
-                <div class="chat-title-container">
-                    <h2 class="chat-title" id="current-chat-title">New Conversation</h2>
-                    <button class="edit-title-btn" id="edit-title-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                    </button>
-                </div>
-                <div class="chat-actions">
-                    <button class="action-btn" id="export-chat-btn" title="Export Chat">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    </button>
-                    <button class="action-btn" id="clear-chat-btn" title="Clear Chat">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                    <!-- In the chat-header section, add this button to the chat-actions div -->
-                    <button class="action-btn" id="fullscreen-btn" title="Toggle Fullscreen">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="chat-container" id="chat-container">
-                <div class="welcome-screen" id="welcome-screen">
+            <!-- Chat area -->
+            <div id="chat-area">
+                <div id="welcome-screen">
                     <div class="welcome-content">
                         <h1>Welcome to Pinned Thoughts</h1>
-                        <p>A place for meaningful conversations and deep reflections.</p>
-                        <p>Start by typing a message below or create a new conversation.</p>
+                        <p>A place for meaningful conversations.</p>
+                        <p>Start by typing a message below.</p>
                         
-                        <div class="welcome-suggestions">
-                            <h3>Try asking about:</h3>
-                            <div class="suggestion-chips">
-                                <button class="suggestion-chip" data-text="What makes life meaningful?">Life's meaning</button>
-                                <button class="suggestion-chip" data-text="How do our thoughts shape our reality?">Thoughts & reality</button>
-                                <button class="suggestion-chip" data-text="Can consciousness exist in non-biological systems?">AI consciousness</button>
-                                <button class="suggestion-chip" data-text="What is the relationship between happiness and purpose?">Happiness & purpose</button>
-                            </div>
+                        <div class="suggestions">
+                            <button class="suggestion" data-text="What makes life meaningful?">Life's meaning</button>
+                            <button class="suggestion" data-text="How do our thoughts shape our reality?">Thoughts & reality</button>
+                            <button class="suggestion" data-text="Can consciousness exist in non-biological systems?">AI consciousness</button>
                         </div>
                     </div>
                 </div>
-                <!-- Chat messages will appear here -->
+                
+                <div id="messages-container">
+                    <!-- Messages will appear here -->
+                </div>
             </div>
             
-            <div class="input-container">
-                <textarea class="input-box" id="message-input" placeholder="Type your message here..." rows="1"></textarea>
-                <button class="send-button" id="send-button" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <!-- Input area -->
+            <div id="input-area">
+                <textarea id="message-input" placeholder="Type your message here..." rows="1"></textarea>
+                <button id="send-button" disabled>
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
         </div>
     </div>
-
-    <div class="modal" id="delete-modal">
+    
+    <!-- Modals -->
+    <div id="delete-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>Delete Conversation</h2>
-                <button class="modal-close">×</button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this conversation? This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button id="cancel-delete" class="btn-secondary">Cancel</button>
-                <button id="confirm-delete" class="btn-primary btn-danger">Delete</button>
+            <h2>Delete Conversation</h2>
+            <p>Are you sure you want to delete this conversation?</p>
+            <div class="modal-buttons">
+                <button id="cancel-delete">Cancel</button>
+                <button id="confirm-delete" class="danger">Delete</button>
             </div>
         </div>
     </div>
-
-    <div class="modal" id="edit-title-modal">
+    
+    <div id="edit-title-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>Edit Conversation Title</h2>
-                <button class="modal-close">×</button>
-            </div>
-            <div class="modal-body">
-                <input type="text" id="edit-title-input" placeholder="Enter new title" maxlength="50">
-            </div>
-            <div class="modal-footer">
-                <button id="cancel-edit" class="btn-secondary">Cancel</button>
-                <button id="confirm-edit" class="btn-primary">Save</button>
+            <h2>Edit Title</h2>
+            <input type="text" id="edit-title-input" placeholder="Enter new title">
+            <div class="modal-buttons">
+                <button id="cancel-edit">Cancel</button>
+                <button id="confirm-edit">Save</button>
             </div>
         </div>
     </div>
-
-    <div class="modal" id="settings-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Settings</h2>
-                <button class="modal-close">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <h3>Appearance</h3>
-                    <div class="setting-item">
-                        <label for="font-size">Font Size</label>
-                        <div class="setting-control">
-                            <select id="font-size">
-                                <option value="small">Small</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="large">Large</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <label for="typing-speed">Typing Speed</label>
-                        <div class="setting-control">
-                            <select id="typing-speed">
-                                <option value="fast">Fast</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="slow">Slow</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h3>Chat Behavior</h3>
-                    <div class="setting-item">
-                        <label for="auto-scroll">Auto-scroll to bottom</label>
-                        <div class="setting-control">
-                            <label class="switch">
-                                <input type="checkbox" id="auto-scroll" checked>
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <label for="sound-effects">Sound effects</label>
-                        <div class="setting-control">
-                            <label class="switch">
-                                <input type="checkbox" id="sound-effects">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="save-settings" class="btn-primary">Save Settings</button>
-            </div>
-        </div>
+    
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    
+    <!-- Loader -->
+    <div id="loader">
+        <div class="spinner"></div>
     </div>
-
-    <div class="toast-container" id="toast-container"></div>
-
+    
     <script src="script.js"></script>
 </body>
 </html>
