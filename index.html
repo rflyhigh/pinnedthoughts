@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinned Thoughts</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Work+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">Pinned Thoughts</h1>
+                <button class="close-sidebar" id="close-sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="model-selector">
+                <label for="model-select">AI Model:</label>
+                <select id="model-select">
+                    <option value="llama3-8b">Llama 3 (8B)</option>
+                    <option value="llama3-70b">Llama 3 (70B)</option>
+                    <option value="mixtral-8x7b">Mixtral 8x7B</option>
+                    <option value="llama3-3-70b">Llama 3.3 (70B)</option>
+                    <option value="deepseek-70b">DeepSeek (70B)</option>
+                </select>
+            </div>
+            
+            <div class="new-chat-btn-container">
+                <button id="new-chat-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Conversation
+                </button>
+            </div>
+            
+            <div class="chats-container">
+                <h2>Your Conversations</h2>
+                <div class="folder-tabs" id="chat-list">
+                    <!-- Chat list will be populated here -->
+                    <div class="empty-chats-message">No conversations yet</div>
+                </div>
+            </div>
+            
+            <div class="theme-selector">
+                <div class="theme-dot" data-theme="default"></div>
+                <div class="theme-dot" data-theme="sage"></div>
+                <div class="theme-dot" data-theme="rose"></div>
+                <div class="theme-dot" data-theme="navy"></div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="mobile-header">
+                <button class="menu-button" id="open-sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <h1 class="mobile-title">Pinned Thoughts</h1>
+            </div>
+            
+            <div class="chat-container" id="chat-container">
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-content">
+                        <h1>Welcome to Pinned Thoughts</h1>
+                        <p>A place for meaningful conversations and deep reflections.</p>
+                        <p>Start by typing a message below or create a new conversation.</p>
+                    </div>
+                </div>
+                <!-- Chat messages will appear here -->
+            </div>
+            
+            <div class="input-container">
+                <textarea class="input-box" id="message-input" placeholder="Type your message here..."></textarea>
+                <button class="send-button" id="send-button" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="delete-modal">
+        <div class="modal-content">
+            <h2>Delete Conversation</h2>
+            <p>Are you sure you want to delete this conversation? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button id="cancel-delete">Cancel</button>
+                <button id="confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="edit-title-modal">
+        <div class="modal-content">
+            <h2>Edit Conversation Title</h2>
+            <input type="text" id="edit-title-input" placeholder="Enter new title">
+            <div class="modal-buttons">
+                <button id="cancel-edit">Cancel</button>
+                <button id="confirm-edit">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
