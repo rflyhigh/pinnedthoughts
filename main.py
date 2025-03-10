@@ -110,7 +110,7 @@ def start_health_ping():
         async with httpx.AsyncClient() as client:
             while True:
                 try:
-                    await client.get("https://your-render-app-url.onrender.com/health")
+                    await client.get("https://pinnedthoughts.onrender.com/health")
                     print("Health ping sent")
                 except Exception as e:
                     print(f"Health ping failed: {e}")
