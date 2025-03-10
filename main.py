@@ -29,7 +29,8 @@ AVAILABLE_MODELS = {
     "llama3-8b": "llama3-8b-8192",
     "llama3-70b": "llama3-70b-8192",
     "mixtral-8x7b": "mixtral-8x7b-32768",
-    "gemma-7b": "gemma-7b-it"
+    "llama3-3-70b": "llama-3.3-70b-versatile",
+    "deepseek-70b": "deepseek-r1-distill-llama-70b"
 }
 DEFAULT_MODEL = "llama3-8b-8192"
 
@@ -150,23 +151,28 @@ async def generate_title(message: str, model: str) -> str:
     }
     
     async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=headers,
-            json=payload
-        )
-        
-        if response.status_code != 200:
-            return "New Conversation"
-        
-        result = response.json()
-        title = result["choices"][0]["message"]["content"].strip().strip('"')
-        
-        # Limit title length
-        if len(title) > 30:
-            title = title[:27] + "..."
+        try:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30.0
+            )
             
-        return title
+            if response.status_code != 200:
+                return "New Conversation"
+            
+            result = response.json()
+            title = result["choices"][0]["message"]["content"].strip().strip('"')
+            
+            # Limit title length
+            if len(title) > 30:
+                title = title[:27] + "..."
+                
+            return title
+        except Exception as e:
+            print(f"Error generating title: {e}")
+            return "New Conversation"
 
 async def get_ai_response(messages: List[Dict[str, str]], model: str) -> str:
     """Get a response from the GROQ API"""
@@ -182,17 +188,33 @@ async def get_ai_response(messages: List[Dict[str, str]], model: str) -> str:
     }
     
     async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=headers,
-            json=payload
-        )
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail="Failed to get response from AI model")
-        
-        result = response.json()
-        return result["choices"][0]["message"]["content"]
+        try:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=60.0  # Increased timeout
+            )
+            
+            if response.status_code != 200:
+                error_detail = response.text
+                try:
+                    error_json = response.json()
+                    if "error" in error_json:
+                        error_detail = error_json["error"].get("message", error_detail)
+                except:
+                    pass
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"API returned status code {response.status_code}: {error_detail}"
+                )
+            
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+        except httpx.TimeoutException:
+            raise HTTPException(status_code=504, detail="Request to AI service timed out")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error communicating with AI service: {str(e)}")
 
 # Endpoints
 @app.get("/health")
@@ -210,6 +232,7 @@ async def chat(request: ChatRequest):
     """Send a message and get a response"""
     conn = get_db_connection()
     
+    # Get model ID from available models or use default
     model_id = AVAILABLE_MODELS.get(request.model, DEFAULT_MODEL) if request.model else DEFAULT_MODEL
     
     try:
@@ -231,10 +254,10 @@ async def chat(request: ChatRequest):
                 raise HTTPException(status_code=404, detail="Chat not found")
             
             chat_id = request.chat_id
-            # Update the chat's updated_at timestamp
+            # Update the chat's updated_at timestamp and model if changed
             conn.execute(
-                "UPDATE chats SET updated_at = ? WHERE id = ?",
-                (datetime.now().isoformat(), chat_id)
+                "UPDATE chats SET updated_at = ?, model = ? WHERE id = ?",
+                (datetime.now().isoformat(), model_id, chat_id)
             )
         
         # Get message history for context
@@ -263,21 +286,25 @@ async def chat(request: ChatRequest):
         )
         
         # Get AI response
-        ai_response = await get_ai_response(messages, model_id)
-        
-        # Save AI response to database
-        conn.execute(
-            "INSERT INTO messages (id, chat_id, role, content, timestamp) VALUES (?, ?, ?, ?, ?)",
-            (str(uuid.uuid4()), chat_id, "assistant", ai_response, datetime.now().isoformat())
-        )
-        
-        conn.commit()
-        
-        return {
-            "chat_id": chat_id,
-            "message": request.message,
-            "response": ai_response
-        }
+        try:
+            ai_response = await get_ai_response(messages, model_id)
+            
+            # Save AI response to database
+            conn.execute(
+                "INSERT INTO messages (id, chat_id, role, content, timestamp) VALUES (?, ?, ?, ?, ?)",
+                (str(uuid.uuid4()), chat_id, "assistant", ai_response, datetime.now().isoformat())
+            )
+            
+            conn.commit()
+            
+            return {
+                "chat_id": chat_id,
+                "message": request.message,
+                "response": ai_response
+            }
+        except Exception as e:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=f"Error from AI service: {str(e)}")
     
     except Exception as e:
         conn.rollback()
